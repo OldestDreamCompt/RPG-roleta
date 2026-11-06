@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roletas de Baús — RPG de Animes</title>
+<style>
+/* =========================================================
+   1. APARÊNCIA DA PÁGINA
+   Se quiser mudar cores, fontes ou espaçamentos, comece aqui.
+   ========================================================= */
+
+:root{--bg:#07111f;--panel:#101f33;--panel2:#142942;--line:#2b4e73;--text:#edf6ff;--muted:#a9bfd5;--accent:#55c7ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#142d49 0%,#07111f 65%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh}
+header{text-align:center;padding:28px 16px 14px}
+h1{margin:0 0 8px;font-size:clamp(1.7rem,4vw,2.6rem);letter-spacing:.02em}
+header p{margin:0;color:var(--muted)}
+main{max-width:1250px;margin:auto;padding:16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.panel{background:linear-gradient(160deg,rgba(21,43,68,.98),rgba(10,24,41,.98));border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 12px 32px #0005;min-width:0}
+.panel h2{text-align:center;margin:0 0 5px;font-size:1.28rem}
+.sub{text-align:center;color:var(--muted);font-size:.9rem;min-height:42px;margin:0 0 12px}
+.wheel-wrap{position:relative;width:min(100%,330px);aspect-ratio:1;margin:0 auto 16px}
+.pointer{position:absolute;z-index:3;left:50%;top:-7px;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:28px solid #fff;filter:drop-shadow(0 2px 4px #0009)}
+.wheel{width:100%;height:100%;border-radius:50%;border:5px solid #d8eaff;box-shadow:0 0 0 4px #163452,0 8px 20px #0007;transition:transform 5s cubic-bezier(.12,.72,.12,1);background:#18314c}
+.wheel canvas{width:100%;height:100%;display:block;border-radius:50%}
+.hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:17%;aspect-ratio:1;border-radius:50%;background:#eef8ff;border:4px solid #244665;box-shadow:0 2px 8px #0008;pointer-events:none}
+button{display:block;width:100%;border:0;border-radius:11px;padding:12px 14px;font-weight:800;font-size:1rem;color:#051321;background:linear-gradient(90deg,#67d8ff,#8ce9ff);cursor:pointer;box-shadow:0 5px 0 #277aa0;transition:transform .12s,filter .12s}
+button:hover{filter:brightness(1.08)}button:active{transform:translateY(3px);box-shadow:0 2px 0 #277aa0}button:disabled{opacity:.55;cursor:wait}
+.result{margin-top:14px;min-height:72px;padding:12px;border-radius:11px;background:#071522;border:1px solid #24415e;text-align:center}
+.result strong{display:block;font-size:1.1rem;margin-bottom:4px}
+.result small{color:var(--muted)}
+.odds{margin-top:13px;font-size:.88rem;color:var(--muted);line-height:1.65}
+.odds summary{cursor:pointer;color:#d7eaff;font-weight:700}
+.odds ul{padding-left:20px;margin:8px 0 0}
+.note{max-width:1180px;margin:0 auto 28px;padding:0 18px;color:var(--muted);font-size:.9rem;line-height:1.6}
+@media(max-width:950px){main{grid-template-columns:1fr;max-width:500px}.panel{padding:18px}.wheel-wrap{width:min(100%,340px)}.sub{min-height:0}}
+
+.admin-entry{max-width:1250px;margin:14px auto 0;padding:0 16px}
+.admin-open{max-width:240px;margin:0 auto;background:linear-gradient(90deg,#315f91,#4388bd);color:#fff;box-shadow:0 5px 0 #193f66}
+.admin-panel{max-width:1250px;margin:18px auto;padding:20px;background:linear-gradient(160deg,#142b45,#0b1b2d);border:1px solid #3d6b96;border-radius:18px;box-shadow:0 14px 36px #0007}
+.admin-panel[hidden]{display:none}
+.admin-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.admin-heading h2{margin:4px 0;font-size:1.45rem}
+.admin-heading p,.admin-help,.admin-security-note{color:var(--muted);font-size:.88rem;line-height:1.5}
+.admin-kicker{font-size:.72rem;letter-spacing:.15em;color:#7edaff;font-weight:800}
+.admin-close{width:auto;padding:9px 15px;background:#28445f;color:#fff;box-shadow:none}
+.admin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.admin-card{min-width:0;padding:16px;border:1px solid #315474;border-radius:14px;background:#0a1929}
+.admin-card h3{margin:0 0 14px;font-size:1.05rem}
+.admin-card label{display:block;margin:12px 0 6px;font-size:.9rem;font-weight:700}
+.admin-card select,.admin-card textarea,.admin-fields input{width:100%;padding:10px;border:1px solid #42698c;border-radius:9px;background:#071522;color:#edf6ff;font:inherit}
+.admin-card textarea{resize:vertical;line-height:1.55}
+.admin-fields{display:grid;gap:9px}
+.admin-field{display:grid;grid-template-columns:minmax(0,1fr) 105px;align-items:center;gap:10px}
+.admin-field label{margin:0}
+.admin-field input{text-align:right}
+.admin-total{font-weight:800;margin:12px 0 0;color:#7edaff}
+.admin-total.invalid{color:#ff8b8b}
+.admin-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.admin-actions button{width:auto;flex:1 1 190px}
+.admin-actions .secondary-action{background:#294b6c;color:#fff;box-shadow:0 5px 0 #17324d}
+.admin-actions .danger-action{background:#7d3540;color:#fff;box-shadow:0 5px 0 #4e2028}
+.admin-message{margin:14px 0 0;padding:11px;border:1px solid #315474;border-radius:9px;background:#0a1929;color:#bdeaff}
+.admin-security-note{margin:12px 0 0}
+@media(max-width:950px){.admin-panel{margin:16px;padding:14px}.admin-grid{grid-template-columns:1fr}.admin-heading{align-items:flex-start}.admin-heading h2{font-size:1.2rem}}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>🎲 Roletas de Baús</h1>
+  <p>Sistema de recompensas para RPG de animes</p>
+  <div class="admin-entry">
+    <button type="button" id="openAdminBtn" class="admin-open">⚙️ Administração</button>
+  </div>
+</header>
+
+<section id="adminPanel" class="admin-panel" hidden>
+  <div class="admin-heading">
+    <div>
+      <span class="admin-kicker">CENTRAL DE CONFIGURAÇÃO</span>
+      <h2>⚙️ Administração da roleta</h2>
+      <p>Edite os dados por aqui. Não é necessário alterar o código.</p>
+    </div>
+    <button type="button" id="closeAdminBtn" class="admin-close">Fechar</button>
+  </div>
+
+  <div class="admin-grid">
+    <section class="admin-card">
+      <h3>① Itens de cada raridade</h3>
+      <label for="adminRaritySelect">Escolha a raridade</label>
+      <select id="adminRaritySelect"></select>
+      <label for="adminItemsText">Itens (um por linha)</label>
+      <textarea id="adminItemsText" rows="10" spellcheck="false"></textarea>
+      <p class="admin-help">Cada linha será um item possível. Apague uma linha para remover um item ou escreva uma nova para adicionar.</p>
+    </section>
+
+    <section class="admin-card">
+      <h3>② Chances das raridades</h3>
+      <label for="adminDungeonSelect">Escolha o rank da Dungeon</label>
+      <select id="adminDungeonSelect">
+        <option value="F">F</option><option value="E">E</option><option value="D">D</option>
+        <option value="C">C</option><option value="B">B</option><option value="A">A</option>
+        <option value="S">S</option><option value="SS">SS</option><option value="SSS">SSS</option>
+      </select>
+      <div id="adminRarityChances" class="admin-fields"></div>
+      <p id="adminRarityTotal" class="admin-total">Total: 100%</p>
+      <p class="admin-help">A soma precisa ser exatamente 100%. Use ponto ou vírgula para casas decimais.</p>
+    </section>
+
+    <section class="admin-card">
+      <h3>③ Chances da quantidade</h3>
+      <p class="admin-help">Defina a chance de receber de 1 a 5 itens no baú.</p>
+      <div id="adminQuantityChances" class="admin-fields"></div>
+      <p id="adminQuantityTotal" class="admin-total">Total: 100%</p>
+    </section>
+  </div>
+
+  <div class="admin-actions">
+    <button type="button" id="saveAdminBtn">💾 Salvar alterações</button>
+    <button type="button" id="exportAdminBtn" class="secondary-action">⬇️ Exportar backup</button>
+    <button type="button" id="importAdminBtn" class="secondary-action">⬆️ Importar backup</button>
+    <button type="button" id="resetAdminBtn" class="danger-action">Restaurar configurações originais</button>
+    <input type="file" id="importAdminFile" accept=".json,application/json" hidden>
+  </div>
+  <p id="adminMessage" class="admin-message" role="status">As alterações só entram na roleta depois de salvar.</p>
+  <p class="admin-security-note"><strong>Importante:</strong> as configurações são guardadas neste navegador e neste dispositivo. O painel não tem senha porque uma senha colocada somente no HTML poderia ser descoberta por visitantes. Para proteger alterações em um site público, é necessário usar autenticação e armazenamento online no servidor.</p>
+</section>
+
+<main>
+  <section class="panel dungeon-panel" style="grid-column:1/-1">
+    <h2>⓪ Selecionar Dungeon</h2>
+    <p class="sub">Escolha o rank da Dungeon concluída. Quanto maior o rank, melhores as chances de encontrar um baú raro.</p>
+    <label for="dungeonSelect" style="display:block;margin:0 auto 8px;max-width:440px;font-weight:700">Rank da Dungeon</label>
+    <select id="dungeonSelect" style="display:block;width:100%;max-width:440px;margin:0 auto;padding:13px;border-radius:10px;border:1px solid #47729a;background:#071522;color:#edf6ff;font-size:1rem">
+      <option value="">Selecione uma Dungeon…</option>
+      <option value="F">F — Muito fácil</option><option value="E">E — Fácil</option>
+      <option value="D">D — Baixa dificuldade</option><option value="C">C — Intermediária</option>
+      <option value="B">B — Difícil</option><option value="A">A — Muito difícil</option>
+      <option value="S">S — Extrema</option><option value="SS">SS — Épica</option>
+      <option value="SSS">SSS — Máxima dificuldade</option>
+    </select>
+    <div class="result" id="dungeonResult"><strong>Nenhuma Dungeon selecionada</strong><small>Selecione o rank para liberar a roleta de raridade.</small></div>
+  </section>
+  <section class="panel">
+    <h2>① Roleta de raridade</h2>
+    <p class="sub">Determine a raridade do baú encontrado na dungeon.</p>
+    <div class="wheel-wrap"><div class="pointer"></div><div class="wheel" id="rarityWheel"><canvas id="rarityCanvas" width="700" height="700"></canvas></div><div class="hub"></div></div>
+    <button id="rarityBtn" disabled>Sortear raridade</button>
+    <div style="margin-top:14px;padding:12px;border:1px solid #2b4e73;border-radius:12px;background:#0b1929">
+      <label for="manualRaritySelect" style="display:block;margin-bottom:8px;font-weight:700">Ou escolha a raridade manualmente</label>
+      <select id="manualRaritySelect" style="display:block;width:100%;padding:12px;border-radius:10px;border:1px solid #47729a;background:#071522;color:#edf6ff;font-size:1rem;margin-bottom:10px">
+        <option value="">Selecione uma raridade…</option>
+        <option>Comum</option><option>Raro</option><option>Super Raro</option><option>Ultra Raro</option><option>Lendário</option><option>Mítico</option><option>Transcendental</option>
+      </select>
+      <button id="manualRarityBtn" disabled>Confirmar raridade escolhida</button>
+    </div>
+    <div class="result" id="rarityResult"><strong>Aguardando Dungeon</strong><small>Selecione o rank antes de sortear a raridade.</small></div>
+    <details class="odds" open><summary>Chances por raridade</summary><ul id="rarityOdds"></ul></details>
+  </section>
+  <section class="panel">
+    <h2>② Roleta de quantidade</h2>
+    <p class="sub">Quanto mais itens no baú, mais raro é esse resultado.</p>
+    <div class="wheel-wrap"><div class="pointer"></div><div class="wheel" id="quantityWheel"><canvas id="quantityCanvas" width="700" height="700"></canvas></div><div class="hub"></div></div>
+    <button id="quantityBtn" disabled>Sortear quantidade</button>
+    <div class="result" id="quantityResult"><strong>Nenhuma quantidade sorteada</strong><small>Escolha quantos itens haverá no baú.</small></div>
+    <details class="odds" open><summary>Chances por quantidade</summary><ul id="quantityOdds"></ul></details>
+  </section>
+  <section class="panel">
+    <h2>③ Roleta de itens</h2>
+    <p class="sub">Os itens disponíveis mudam conforme a raridade sorteada.</p>
+    <div class="wheel-wrap"><div class="pointer"></div><div class="wheel" id="itemWheel"><canvas id="itemCanvas" width="700" height="700"></canvas></div><div class="hub"></div></div>
+    <button id="itemBtn" disabled>Sortear item</button>
+    <div class="result" id="itemResult"><strong>Aguardando a raridade</strong><small>Primeiro sorteie a raridade do baú.</small></div>
+    <details class="odds" open><summary>Itens possíveis nesta raridade</summary><ul id="itemOdds"><li>Sorteie uma raridade para carregar os itens.</li></ul></details>
+  </section>
+</main>
+<div class="note">
+  <b>Como usar:</b> sorteie a raridade, sorteie a quantidade e gire a roleta de itens uma vez para cada item do baú. A roleta de itens permite resultados repetidos. As chances de raridade e quantidade são independentes.
+</div>
+<script>
+/* =========================================================
+   2. CONFIGURAÇÕES DA ROLETA
+   Esta é a parte que você mais provavelmente vai editar:
+   - nomes e cores das raridades;
+   - chances de cada raridade por rank de Dungeon;
+   - chances de quantidade;
+   - lista de itens de cada raridade.
+   ========================================================= */
+
+// 2.1. Raridades disponíveis e a cor de cada uma.
+let rarityBase = [
+ {name:"Comum",color:"#65859d"},{name:"Raro",color:"#3189d8"},
+ {name:"Super Raro",color:"#8d64d9"},{name:"Ultra Raro",color:"#df9d38"},
+ {name:"Lendário",color:"#d85c56"},{name:"Mítico",color:"#e65cb4"},
+ {name:"Transcendental",color:"#41c9b0"}
+];
+// 2.2. Chances de cada raridade conforme o rank da Dungeon.
+// A ordem dos números acompanha a ordem de rarityBase:
+// Comum, Raro, Super Raro, Ultra Raro, Lendário, Mítico, Transcendental.
+let dungeonOdds = {
+ F:[75,15,6,2.5,1,0.4,0.1],
+ E:[65,20,9,4,1.5,0.4,0.1],
+ D:[55,23,13,6,2.5,0.4,0.1],
+ C:[45,25,16,8,4,1.5,0.5],
+ B:[35,26,19,11,6,2.5,0.5],
+ A:[25,26,21,15,9,3,1],
+ S:[10,18,22,18,14,11,7],
+ SS:[5,12,18,20,17,18,10],
+ SSS:[1,5,12,17,15,15,35]
+};
+// Guarda as chances da Dungeon selecionada.
+let rarities = [];
+function setDungeonRank(rank){
+ rarities=rarityBase.map((item,i)=>({...item,p:dungeonOdds[rank][i]}));
+ drawWheel(document.getElementById("rarityCanvas"),rarities);
+ setupOdds("rarityOdds",rarities);
+}
+// 2.3. Chances de conseguir de 1 a 5 itens no baú.
+let quantities = [
+ {name:"1 item",p:50,color:"#2d8e83"},
+ {name:"2 itens",p:25,color:"#397fb6"},
+ {name:"3 itens",p:12,color:"#8a68c7"},
+ {name:"4 itens",p:8,color:"#c47a3e"},
+ {name:"5 itens",p:5,color:"#c64f67"}
+];
+// 2.4. LISTAS DE ITENS — EDITE OS NOMES ENTRE ASPAS.
+// Para adicionar um item, escreva: "Nome do item",
+// e separe os itens por vírgula.
+// Exemplo: "Espada de Ferro", "Poção Azul", "Escudo Antigo".
+// Não apague as chaves nem os colchetes.
+let loot = {
+ "Comum":["Espada enferrujada","Espada defeituosa","Kunai","Shurikens","Pedaço de pano","Roupas comuns","Ervas combinatória","Escudo danificado","Adaga cega","Capacete de proteção amassado","Botas furadas","Couro de animais","Comidas diversas"],
+ "Raro":["Espada de aço","Espada Longa","Kunai reforçada","Shurikens grandes","Armadura básica","Elmo","Botas reforçadas","Livro empoeirado","Arco Basico","Flechas","Adaga afiada"],
+ "Super Raro":["Arco Recurvo","Flechas de metal","Flechas envenenadas","Lança","Escudo de Doran","Espada com encantamento de leveza","Espada Larga Grande","Odachi","Espada do Dragão Quebrada","Elmo de Doran"],
+ "Ultra Raro":["Armadura Reforçada Leve","Botas da Rapidez","Pergaminho de Jutsu","Poção de Recuperação","Poção de Estamina","Poção de Aumento","Poção de invisibilidade","Arco com encantamento de sangramento","Flechas explosiva","Lança Quebra Montanhas","Mix de Panos","Radar do Dragão Quebrado"],
+ "Lendário":["Botas de Hermes","Tridente de Poseidon","Bidente de Hades","Pergaminho do Mar","Espada Destruidora de Demônios","Espada da Fé Inabalável","Luvas separa mares","Arco de Apolo","Arco de Ártemis","Escudo de Aquiles"],
+ "Mítico":["Raio de Zeus","Lança Gungnir","Espada Z","Olho perdido de Odin","Saco de Senzu Bens","Espada do Rei Destruído","Tapion Sword","1x Brinco Potara","Pergaminho da Dança","Martelo da Forja","Núcleo de Ant Matéria","Núcleo de Estrela","Aço forjado em estrelas","Coração de Yeti","Coração do Dragão Ignell"],
+ "Transcendental":["Núcleo de uma Singularidade","Núcleo de uma Singularidade Invertida","Tyrfing","Coração de Aço","Grande Sábio","Predador","Livro do Conhecimento","Grande Fábula","Ovo de Familiar","Armadura Aniquiladora de Deuses"]
+};
+/* =========================================================
+   3. FUNCIONAMENTO DA ROLETA
+   Daqui para baixo ficam as funções que fazem o sistema rodar.
+   Se você só quer trocar itens ou probabilidades, normalmente
+   não precisa alterar esta parte.
+   ========================================================= */
+
+// Guarda o progresso da abertura do baú.
+const state={rarity:null,quantity:null,itemsWon:[],rotations:{rarity:0,quantity:0,item:0},busy:{rarity:false,quantity:false,item:false}};
+// Escolhe um resultado respeitando o peso/probabilidade de cada opção.
+function weightedPick(items){
+ const r=Math.random()*items.reduce((s,x)=>s+x.p,0);let acc=0;
+ for(const item of items){acc+=item.p;if(r<acc)return item}
+ return items[items.length-1];
+}
+// Desenha uma roleta no elemento canvas.
+function drawWheel(canvas,items){
+ const ctx=canvas.getContext("2d"), size=canvas.width, c=size/2, radius=size/2-4;
+ ctx.clearRect(0,0,size,size);
+ let start=-Math.PI/2;
+ const total=items.reduce((s,x)=>s+x.p,0);
+ items.forEach((item)=>{
+  const sweep=2*Math.PI*item.p/total, end=start+sweep, mid=start+sweep/2;
+  ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,radius,start,end);ctx.closePath();
+  ctx.fillStyle=item.color;ctx.fill();ctx.strokeStyle="#f1f7ff";ctx.lineWidth=3;ctx.stroke();
+  ctx.save();ctx.translate(c,c);ctx.rotate(mid);
+  const label=item.name;
+  ctx.textAlign="right";ctx.textBaseline="middle";ctx.fillStyle="#fff";
+  ctx.shadowColor="#0009";ctx.shadowBlur=3;
+  let fontSize=items.length>12?13:items.length>6?21:items.length>5?27:31;
+  if(label.length>13)fontSize=Math.min(fontSize,items.length>12?11:22);
+  if(label.length>18)fontSize=Math.min(fontSize,items.length>12?10:18);
+  ctx.font=`800 ${fontSize}px system-ui, sans-serif`;
+  const maxW=radius*.77;
+  let shown=label;
+  while(ctx.measureText(shown).width>maxW&&shown.length>5)shown=shown.slice(0,-2)+"…";
+  ctx.fillText(shown,radius-28,0);
+  if(items.length<=7 && item.p>=4){
+   ctx.font="700 19px system-ui,sans-serif";ctx.fillText(item.p+"%",radius-28,28);
+  }
+  ctx.restore();start=end;
+ });
+}
+// Mostra na página a lista de probabilidades.
+function setupOdds(id,items){document.getElementById(id).innerHTML=items.map(x=>`<li>${x.name}: <b>${x.p}%</b></li>`).join("");}
+setupOdds("quantityOdds",quantities);
+drawWheel(document.getElementById("quantityCanvas"),quantities);
+drawWheel(document.getElementById("itemCanvas"),loot["Comum"].map((name,i)=>({name,p:1,color:["#497f9b","#467b83","#6b8e67","#7b789f","#9a8060"][i%5]})));
+// Faz a animação da roleta e entrega o resultado sorteado.
+function animatePick(key,items,wheelId,canvasId,btnId,resultId,onChosen){
+ if(state.busy[key])return;
+ state.busy[key]=true;
+ const btn=document.getElementById(btnId);btn.disabled=true;
+ const chosen=weightedPick(items), idx=items.indexOf(chosen), total=items.reduce((s,x)=>s+x.p,0);
+ let angle=-90;
+ for(let i=0;i<idx;i++)angle+=360*items[i].p/total;
+ const center=angle+180*chosen.p/total+90;
+ const wheel=document.getElementById(wheelId);
+ const current=state.rotations[key], currentMod=((current%360)+360)%360;
+ const targetMod=((360-(center%360))%360);
+ const delta=(targetMod-currentMod+360)%360;
+ const final=current+5*360+delta;
+ state.rotations[key]=final;
+ wheel.style.transform=`rotate(${final}deg)`;
+ const result=document.getElementById(resultId);
+ result.innerHTML="<strong>Girando…</strong><small>O resultado está sendo sorteado.</small>";
+ setTimeout(()=>{
+  result.innerHTML=`<strong>${chosen.name}</strong><small>Chance: ${chosen.p}%</small>`;
+  state.busy[key]=false;btn.disabled=false;
+  onChosen(chosen);
+ },5100);
+}
+// Prepara os itens da raridade escolhida para aparecerem na roleta.
+function itemWheelList(rarity){
+ return loot[rarity].map((name,i)=>({name,p:1,color:["#497f9b","#467b83","#6b8e67","#7b789f","#9a8060"][i%5]}));
+}
+// Aplica a raridade escolhida e libera a etapa de quantidade.
+function applyRarity(rarityName, chanceText){
+ state.rarity=rarityName;state.quantity=null;state.itemsWon=[];
+ document.getElementById("quantityBtn").disabled=true;
+ document.getElementById("itemBtn").disabled=true;
+ const items=itemWheelList(rarityName);
+ drawWheel(document.getElementById("itemCanvas"),items);
+ document.getElementById("itemOdds").innerHTML=items.map(x=>`<li>${escapeHtml(x.name)}</li>`).join("");
+ document.getElementById("rarityResult").innerHTML=`<strong>${rarityName}</strong><small>${chanceText}</small>`;
+ document.getElementById("quantityResult").innerHTML="<strong>Raridade definida</strong><small>Agora sorteie a quantidade de itens.</small>";
+ document.getElementById("itemResult").innerHTML=`<strong>${rarityName} selecionado</strong><small>Agora sorteie a quantidade de itens.</small>`;
+ document.getElementById("quantityBtn").disabled=false;
+}
+// 4.1. Escolha manual da raridade.
+document.getElementById("manualRaritySelect").addEventListener("change",event=>{
+ document.getElementById("manualRarityBtn").disabled=!event.target.value || !document.getElementById("dungeonSelect").value || state.busy.rarity || state.busy.quantity || state.busy.item;
+});
+document.getElementById("manualRarityBtn").addEventListener("click",()=>{
+ const rarityName=document.getElementById("manualRaritySelect").value;
+ const rank=document.getElementById("dungeonSelect").value;
+ if(!rarityName || !rank || state.busy.rarity || state.busy.quantity || state.busy.item)return;
+ document.getElementById("rarityBtn").disabled=false;
+ const rarity=rarities.find(x=>x.name===rarityName);
+ applyRarity(rarityName,`Escolhida manualmente · Dungeon ${rank} · Chance na roleta: ${rarity ? rarity.p : "—"}%`);
+});
+// 4.2. Quando a Dungeon muda, o progresso anterior é reiniciado.
+document.getElementById("dungeonSelect").addEventListener("change",event=>{
+ const rank=event.target.value;
+ state.rarity=null;state.quantity=null;state.itemsWon=[];
+ document.getElementById("manualRaritySelect").value="";
+ document.getElementById("manualRarityBtn").disabled=true;
+ document.getElementById("quantityBtn").disabled=true;
+ document.getElementById("itemBtn").disabled=true;
+ document.getElementById("rarityBtn").disabled=!rank;
+ document.getElementById("manualRarityBtn").disabled=!rank || !document.getElementById("manualRaritySelect").value;
+ document.getElementById("rarityResult").innerHTML="<strong>Aguardando sorteio</strong><small>Gire a roleta para descobrir a raridade.</small>";
+ document.getElementById("quantityResult").innerHTML="<strong>Aguardando a raridade</strong><small>Primeiro sorteie a raridade do baú.</small>";
+ document.getElementById("itemResult").innerHTML="<strong>Aguardando a raridade e a quantidade</strong><small>As etapas precisam ser feitas na ordem.</small>";
+ if(!rank){
+  document.getElementById("dungeonResult").innerHTML="<strong>Nenhuma Dungeon selecionada</strong><small>Selecione o rank para liberar a roleta.</small>";
+  document.getElementById("rarityOdds").innerHTML="";
+  document.getElementById("rarityCanvas").getContext("2d").clearRect(0,0,700,700);
+  return;
+ }
+ setDungeonRank(rank);
+ document.getElementById("dungeonResult").innerHTML=`<strong>Dungeon rank ${rank} selecionada</strong><small>Probabilidades ajustadas para esta Dungeon.</small>`;
+});
+// 4.3. Sorteio da raridade pela roleta.
+document.getElementById("rarityBtn").addEventListener("click",()=>{
+ if(!document.getElementById("dungeonSelect").value || state.busy.rarity || state.busy.quantity || state.busy.item)return;
+ document.getElementById("quantityBtn").disabled=true;
+ document.getElementById("itemBtn").disabled=true;
+ state.rarity=null;state.quantity=null;state.itemsWon=[];
+ document.getElementById("quantityResult").innerHTML="<strong>Aguardando a raridade</strong><small>Primeiro conclua a roleta de raridade.</small>";
+ document.getElementById("itemResult").innerHTML="<strong>Aguardando a raridade e a quantidade</strong><small>As etapas precisam ser feitas na ordem.</small>";
+ animatePick("rarity",rarities,"rarityWheel","rarityCanvas","rarityBtn","rarityResult",chosen=>{
+  const rank=document.getElementById("dungeonSelect").value;
+  document.getElementById("manualRaritySelect").value="";
+  document.getElementById("manualRarityBtn").disabled=true;
+  applyRarity(chosen.name,`Dungeon ${rank} · Chance nesta Dungeon: ${chosen.p}%`);
+ });
+});
+// 4.4. Sorteio da quantidade de itens.
+document.getElementById("quantityBtn").addEventListener("click",()=>{
+ if(!state.rarity || state.busy.rarity || state.busy.quantity || state.busy.item)return;
+ document.getElementById("itemBtn").disabled=true;
+ state.quantity=null;state.itemsWon=[];
+ animatePick("quantity",quantities,"quantityWheel","quantityCanvas","quantityBtn","quantityResult",chosen=>{
+  state.quantity=parseInt(chosen.name,10);state.itemsWon=[];
+  document.getElementById("quantityResult").innerHTML=`<strong>${chosen.name}</strong><small>Agora gire a roleta de itens ${state.quantity} vez(es).</small>`;
+  document.getElementById("itemResult").innerHTML=`<strong>Pronto para sortear</strong><small>Baú ${state.rarity} · ${state.quantity} item(ns).</small>`;
+  document.getElementById("itemBtn").disabled=false;
+ });
+});
+// 4.5. Sorteio dos itens. Repete até completar a quantidade do baú.
+document.getElementById("itemBtn").addEventListener("click",()=>{
+ if(!state.rarity || !state.quantity || state.itemsWon.length>=state.quantity || state.busy.rarity || state.busy.quantity || state.busy.item){
+  return;
+ }
+ const items=itemWheelList(state.rarity);
+ animatePick("item",items,"itemWheel","itemCanvas","itemBtn","itemResult",chosen=>{
+  state.itemsWon.push(chosen.name);
+  const current=state.itemsWon.length;
+  if(current>=state.quantity){
+   document.getElementById("itemResult").innerHTML=`<strong>Baú concluído!</strong><small>${state.itemsWon.map((n,i)=>`${i+1}. ${escapeHtml(n)}`).join("<br>")}</small>`;
+   document.getElementById("itemBtn").disabled=true;
+  } else {
+   document.getElementById("itemResult").innerHTML=`<strong>${chosen.name}</strong><small>Item ${current} de ${state.quantity}. Raridade: ${state.rarity}. Gire novamente para o próximo.</small>`;
+   document.getElementById("itemBtn").disabled=false;
+  }
+ });
+});
+
+/* =========================================================
+   5. PAINEL DE ADMINISTRAÇÃO
+   Esta parte permite editar os dados pela própria página.
+   As configurações ficam salvas no armazenamento local
+   deste navegador (localStorage).
+   ========================================================= */
+
+const STORAGE_KEY = "roletaRPG_config_v1";
+
+// Cópia inicial para que o botão "Restaurar" recupere os padrões.
+const defaultConfig = {
+  rarityBase: JSON.parse(JSON.stringify(rarityBase)),
+  dungeonOdds: JSON.parse(JSON.stringify(dungeonOdds)),
+  quantities: JSON.parse(JSON.stringify(quantities)),
+  loot: JSON.parse(JSON.stringify(loot))
+};
+
+const adminPanel = document.getElementById("adminPanel");
+const adminRaritySelect = document.getElementById("adminRaritySelect");
+const adminDungeonSelect = document.getElementById("adminDungeonSelect");
+const adminItemsText = document.getElementById("adminItemsText");
+const adminMessage = document.getElementById("adminMessage");
+
+function showAdminMessage(message, isError = false) {
+  adminMessage.textContent = message;
+  adminMessage.style.borderColor = isError ? "#b95757" : "#315474";
+  adminMessage.style.color = isError ? "#ffaaaa" : "#bdeaff";
+}
+
+function parsePercent(value) {
+  const number = Number(String(value).trim().replace(",", "."));
+  return Number.isFinite(number) ? number : NaN;
+}
+
+function getCurrentConfig() {
+  return { rarityBase, dungeonOdds, quantities, loot };
+}
+
+function saveConfigToBrowser() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(getCurrentConfig()));
+}
+
+function loadConfigFromBrowser() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+
+  try {
+    const config = JSON.parse(saved);
+    if (!config.rarityBase || !config.dungeonOdds || !config.quantities || !config.loot) {
+      throw new Error("O arquivo salvo não tem todos os campos necessários.");
+    }
+    rarityBase = config.rarityBase;
+    dungeonOdds = config.dungeonOdds;
+    quantities = config.quantities;
+    loot = config.loot;
+  } catch (error) {
+    console.error("Não foi possível carregar as configurações:", error);
+    showAdminMessage("Não foi possível carregar o salvamento. As configurações padrão foram mantidas.", true);
+  }
+}
+
+function refreshMainPageAfterConfigChange() {
+  // Atualiza as opções de raridade da escolha manual.
+  const manualSelect = document.getElementById("manualRaritySelect");
+  const previousManualValue = manualSelect.value;
+  manualSelect.innerHTML = '<option value="">Selecione uma raridade…</option>';
+  rarityBase.forEach(rarity => {
+    const option = document.createElement("option");
+    option.value = rarity.name;
+    option.textContent = rarity.name;
+    manualSelect.appendChild(option);
+  });
+  if (loot[previousManualValue]) manualSelect.value = previousManualValue;
+
+  // Atualiza a roleta de raridade se já houver uma Dungeon selecionada.
+  const currentRank = document.getElementById("dungeonSelect").value;
+  if (currentRank && dungeonOdds[currentRank]) {
+    setDungeonRank(currentRank);
+  }
+
+  // Atualiza a roleta de quantidade.
+  setupOdds("quantityOdds", quantities);
+  drawWheel(document.getElementById("quantityCanvas"), quantities);
+
+  // Se o baú já tinha uma raridade, atualiza a lista de itens.
+  if (state.rarity && loot[state.rarity]) {
+    const currentItems = itemWheelList(state.rarity);
+    drawWheel(document.getElementById("itemCanvas"), currentItems);
+    document.getElementById("itemOdds").innerHTML =
+      currentItems.map(item => `<li>${escapeHtml(item.name)}</li>`).join("");
+  }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[character]);
+}
+
+function renderAdminRarityOptions() {
+  const previous = adminRaritySelect.value;
+  adminRaritySelect.innerHTML = "";
+  rarityBase.forEach(rarity => {
+    const option = document.createElement("option");
+    option.value = rarity.name;
+    option.textContent = rarity.name;
+    adminRaritySelect.appendChild(option);
+  });
+  if (loot[previous]) adminRaritySelect.value = previous;
+  renderAdminItems();
+}
+
+function renderAdminItems() {
+  const rarityName = adminRaritySelect.value;
+  adminItemsText.value = (loot[rarityName] || []).join("\n");
+}
+
+function renderAdminRarityChances() {
+  const rank = adminDungeonSelect.value;
+  const container = document.getElementById("adminRarityChances");
+  container.innerHTML = "";
+
+  rarityBase.forEach((rarity, index) => {
+    const row = document.createElement("div");
+    row.className = "admin-field";
+
+    const label = document.createElement("label");
+    label.textContent = rarity.name;
+    label.htmlFor = `adminRarityChance${index}`;
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.max = "100";
+    input.step = "0.1";
+    input.id = `adminRarityChance${index}`;
+    input.value = dungeonOdds[rank][index];
+    input.dataset.index = index;
+    input.addEventListener("input", updateAdminTotals);
+
+    row.append(label, input);
+    container.appendChild(row);
+  });
+  updateAdminTotals();
+}
+
+function renderAdminQuantityChances() {
+  const container = document.getElementById("adminQuantityChances");
+  container.innerHTML = "";
+
+  quantities.forEach((quantity, index) => {
+    const row = document.createElement("div");
+    row.className = "admin-field";
+
+    const label = document.createElement("label");
+    label.textContent = quantity.name;
+    label.htmlFor = `adminQuantityChance${index}`;
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.max = "100";
+    input.step = "0.1";
+    input.id = `adminQuantityChance${index}`;
+    input.value = quantity.p;
+    input.dataset.index = index;
+    input.addEventListener("input", updateAdminTotals);
+
+    row.append(label, input);
+    container.appendChild(row);
+  });
+  updateAdminTotals();
+}
+
+function sumInputs(selector) {
+  return [...document.querySelectorAll(selector)]
+    .reduce((sum, input) => sum + (parsePercent(input.value) || 0), 0);
+}
+
+function updateTotalDisplay(elementId, total) {
+  const element = document.getElementById(elementId);
+  element.textContent = `Total: ${Number(total.toFixed(2))}%`;
+  const isValid = Math.abs(total - 100) < 0.000001;
+  element.classList.toggle("invalid", !isValid);
+  return isValid;
+}
+
+function updateAdminTotals() {
+  const rarityTotal = sumInputs("#adminRarityChances input");
+  const quantityTotal = sumInputs("#adminQuantityChances input");
+  updateTotalDisplay("adminRarityTotal", rarityTotal);
+  updateTotalDisplay("adminQuantityTotal", quantityTotal);
+}
+
+function openAdminPanel() {
+  adminPanel.hidden = false;
+  renderAdminRarityOptions();
+  renderAdminRarityChances();
+  renderAdminQuantityChances();
+  adminPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeAdminPanel() {
+  adminPanel.hidden = true;
+}
+
+function saveAdminChanges() {
+  const rarityName = adminRaritySelect.value;
+  const editedItems = adminItemsText.value
+    .split("\n")
+    .map(item => item.trim())
+    .filter(Boolean);
+
+  if (!rarityName) {
+    showAdminMessage("Selecione uma raridade para editar os itens.", true);
+    return;
+  }
+  if (editedItems.length === 0) {
+    showAdminMessage("Cada raridade precisa ter pelo menos um item.", true);
+    return;
+  }
+
+  const rank = adminDungeonSelect.value;
+  const rarityInputs = [...document.querySelectorAll("#adminRarityChances input")];
+  const quantityInputs = [...document.querySelectorAll("#adminQuantityChances input")];
+
+  const rarityValues = rarityInputs.map(input => parsePercent(input.value));
+  const quantityValues = quantityInputs.map(input => parsePercent(input.value));
+
+  if (rarityValues.some(value => !Number.isFinite(value) || value < 0 || value > 100)) {
+    showAdminMessage("Confira as chances das raridades: use valores entre 0 e 100.", true);
+    return;
+  }
+  if (quantityValues.some(value => !Number.isFinite(value) || value < 0 || value > 100)) {
+    showAdminMessage("Confira as chances de quantidade: use valores entre 0 e 100.", true);
+    return;
+  }
+
+  const raritySum = rarityValues.reduce((sum, value) => sum + value, 0);
+  const quantitySum = quantityValues.reduce((sum, value) => sum + value, 0);
+
+  if (Math.abs(raritySum - 100) > 0.000001) {
+    showAdminMessage(`As chances da Dungeon ${rank} somam ${raritySum}%. O total precisa ser 100%.`, true);
+    return;
+  }
+  if (Math.abs(quantitySum - 100) > 0.000001) {
+    showAdminMessage(`As chances de quantidade somam ${quantitySum}%. O total precisa ser 100%.`, true);
+    return;
+  }
+
+  loot[rarityName] = editedItems;
+  dungeonOdds[rank] = rarityValues;
+  quantities = quantities.map((item, index) => ({ ...item, p: quantityValues[index] }));
+
+  saveConfigToBrowser();
+  refreshMainPageAfterConfigChange();
+  showAdminMessage("Alterações salvas neste navegador! A roleta já está usando as novas configurações.");
+}
+
+function exportAdminBackup() {
+  const backup = JSON.stringify(getCurrentConfig(), null, 2);
+  const file = new Blob([backup], { type: "application/json" });
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "backup-configuracoes-roleta.json";
+  link.click();
+  URL.revokeObjectURL(url);
+  showAdminMessage("Backup exportado. Guarde esse arquivo para não perder suas configurações.");
+}
+
+function importAdminBackup(file) {
+  if (!file) return;
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const config = JSON.parse(reader.result);
+      if (!config.rarityBase || !config.dungeonOdds || !config.quantities || !config.loot) {
+        throw new Error("O backup não contém todos os dados da roleta.");
+      }
+
+      // Confere se cada raridade importada possui ao menos um item.
+      for (const rarity of config.rarityBase) {
+        if (!Array.isArray(config.loot[rarity.name]) || config.loot[rarity.name].length === 0) {
+          throw new Error(`A raridade ${rarity.name} está sem itens.`);
+        }
+      }
+
+      rarityBase = config.rarityBase;
+      dungeonOdds = config.dungeonOdds;
+      quantities = config.quantities;
+      loot = config.loot;
+
+      saveConfigToBrowser();
+      renderAdminRarityOptions();
+      renderAdminRarityChances();
+      renderAdminQuantityChances();
+      refreshMainPageAfterConfigChange();
+      showAdminMessage("Backup importado e salvo com sucesso neste navegador.");
+    } catch (error) {
+      showAdminMessage(`Não foi possível importar: ${error.message}`, true);
+    }
+  };
+
+  reader.onerror = () => showAdminMessage("Não foi possível ler o arquivo selecionado.", true);
+  reader.readAsText(file);
+}
+
+function restoreDefaultConfig() {
+  const confirmed = confirm("Isso substituirá as configurações atuais pelas configurações originais. Deseja continuar?");
+  if (!confirmed) return;
+
+  rarityBase = JSON.parse(JSON.stringify(defaultConfig.rarityBase));
+  dungeonOdds = JSON.parse(JSON.stringify(defaultConfig.dungeonOdds));
+  quantities = JSON.parse(JSON.stringify(defaultConfig.quantities));
+  loot = JSON.parse(JSON.stringify(defaultConfig.loot));
+
+  saveConfigToBrowser();
+  renderAdminRarityOptions();
+  renderAdminRarityChances();
+  renderAdminQuantityChances();
+  refreshMainPageAfterConfigChange();
+  showAdminMessage("Configurações originais restauradas.");
+}
+
+// Eventos dos controles do painel.
+document.getElementById("openAdminBtn").addEventListener("click", openAdminPanel);
+document.getElementById("closeAdminBtn").addEventListener("click", closeAdminPanel);
+adminRaritySelect.addEventListener("change", renderAdminItems);
+adminDungeonSelect.addEventListener("change", renderAdminRarityChances);
+document.getElementById("saveAdminBtn").addEventListener("click", saveAdminChanges);
+document.getElementById("exportAdminBtn").addEventListener("click", exportAdminBackup);
+document.getElementById("importAdminBtn").addEventListener("click", () => {
+  document.getElementById("importAdminFile").click();
+});
+document.getElementById("importAdminFile").addEventListener("change", event => {
+  importAdminBackup(event.target.files[0]);
+  event.target.value = "";
+});
+document.getElementById("resetAdminBtn").addEventListener("click", restoreDefaultConfig);
+
+// Carrega automaticamente as últimas configurações salvas neste navegador.
+loadConfigFromBrowser();
+refreshMainPageAfterConfigChange();
+
+</script>
+</body>
+</html>
